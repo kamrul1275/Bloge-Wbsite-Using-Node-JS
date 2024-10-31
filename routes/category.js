@@ -11,7 +11,9 @@ router.get('/', categoryMiddleware,categoryController.getAllCategories);
 router.get('/:id', categoryMiddleware,categoryController.getCategoryById);
 
 // Create a new category
-router.post('/create', categoryMiddleware,categoryController.createCategory);
+// router.post('/create', categoryMiddleware, categoryController.createCategory);
+router.post('/create', categoryController.upload.single('category_image'), categoryController.createCategory);
+// router.post('/create', upload.single('category_image'), categoryController.createCategory);
 
 // Update an existing category by ID
 router.put('/update/:id', categoryMiddleware,categoryController.updateCategory);

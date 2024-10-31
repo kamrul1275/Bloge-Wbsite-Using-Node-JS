@@ -1,12 +1,23 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const router = express.Router();
 const Category = require('../models/Category');
 // const Subcategory = require('../models/Subcategory'); // Adjust the path as necessary
 const { Op } = require('sequelize');// Adjust the path as necessary
 const { get } = require('express/lib/response');
+const multer = require('multer');
+const path = require('path');
+
+
 require('dotenv').config();
 
 
+const app = express();
+
+// Middleware for parsing application/json
+app.use(express.json());
+// Middleware for parsing application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
 
 
 // Get all categories
@@ -54,26 +65,132 @@ exports.getCategoryById = async (req, res) => {
 
 
 
+
+
+
+
 // Create new category
+// exports.createCategory = async (req, res) => {
+//     const { category_name, category_image } = req.body;
+
+//     console.log('Headers:', req.headers);
+//     console.log('Body:', req.body);
+
+//     // Validate input data
+//     if (!category_name) {
+//         return res.status(400).json({ message: 'Please provide all required fields' });
+//     }
+
+//     try {
+//         // Create a new category
+//         const newCategory = await Category.create({
+//             category_name,
+//             category_image
+//         });
+
+//         // Send success response
+//         res.status(201).json({
+//             message: 'Category created successfully',
+//             category: newCategory
+//         });
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// };
+
+
+
+// Configure storage for uploaded files
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         cb(null, 'uploads/'); // Ensure this directory exists or create it
+//     },
+//     filename: (req, file, cb) => {
+//         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+//         cb(null, uniqueSuffix + path.extname(file.originalname)); // Unique filename with original extension
+//     }
+// });
+
+// const upload = multer({ storage });
+
+// Route handler with `multer` middleware
+// exports.createCategory = [
+//     upload.single('category_image'), // The name of the file field in the form should match this
+//     async (req, res) => {
+//         const { category_name } = req.body;
+//         const category_image = req.file ? req.file.filename : null;
+
+//         console.log('Headers:', req.headers);
+//         console.log('Body:', req.body);
+//         console.log('File:', req.file);
+
+//         // Validate input data
+//         if (!category_name) {
+//             return res.status(400).json({ message: 'Please provide all required fields' });
+//         }
+
+//         try {
+//             // Create a new category
+//             const newCategory = await Category.create({
+//                 category_name,
+//                 category_image // Storing only the filename in the database
+//             });
+
+//             // Send success response
+//             res.status(201).json({
+//                 message: 'Category created successfully',
+//                 category: newCategory
+//             });
+//         } catch (error) {
+//             res.status(500).json({ error: error.message });
+//         }
+//     }
+// ];
+
+// Assuming this is in categoryController.js
+
+const storage = multer.diskStorage({
+    destination: './uploads/', // Ensure this directory exists
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1000000 }, // Limit file size to 1MB
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|gif/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb('Error: Images Only!');
+        }
+    }
+});
+
+// Export both `upload` and `createCategory`
+exports.upload = upload;
 exports.createCategory = async (req, res) => {
-    const { category_name, category_image } = req.body;
+    console.log("Checking data:", req.body);
+    console.log("Uploaded File:", req.file);
 
-    console.log('createCategory');
-  
+    const { category_name } = req.body;
+    const category_image = req.file ? req.file.path : null;
 
-    // Validate input data
-    if (!category_name) {
+    if (!category_name || !category_image) {
         return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
     try {
-        // Create a new category
         const newCategory = await Category.create({
             category_name,
             category_image
         });
 
-        // Send success response
         res.status(201).json({
             message: 'Category created successfully',
             category: newCategory
@@ -82,7 +199,6 @@ exports.createCategory = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 
 

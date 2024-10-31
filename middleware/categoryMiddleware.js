@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+// Middleware for parsing application/json
+// app.use(bodyParser.json());
+
 const categoryMiddleware = (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
